@@ -18,12 +18,17 @@ dep_dirname=nginx-${dep_version}
 dep_archive_name=${dep_dirname}.tar.gz
 dep_url=https://nginx.org/download/${dep_archive_name}
 dep_manifest=${dep_package}.composer.json
+nginx_upload_progress=https://github.com/masterzen/nginx-upload-progress-module/archive/master.tar.gz
 
 echo "-----> Building ${dep_package}..."
 
 curl -L ${dep_url} | tar xz
 
 pushd ${dep_dirname}
+
+curl -L $nginx_upload_progress | tar xvz
+
+
 ETC=${OUT_PREFIX}/etc
 VAR=${OUT_PREFIX}/var
 ./configure \
@@ -38,7 +43,9 @@ VAR=${OUT_PREFIX}/var
     --http-scgi-temp-path=${VAR}/run/nginx/scgi_temp \
     --http-log-path=${VAR}/log/nginx/access.log \
     --error-log-path=${VAR}/log/nginx/error.log \
-    --with-http_realip_module
+    --with-compat \
+    --with-http_realip_module \
+    --add-dynamic-module=nginx-upload-progress-module-master
 make -s -j 9
 make install -s
 find ${OUT_PREFIX} -type f \( -executable -o -name '*.a' \) -exec sh -c "file -i '{}' | grep -Eq 'application/x-(archive|executable|sharedlib); charset=binary'" \; -print | xargs strip --strip-unneeded
